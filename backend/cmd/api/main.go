@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,8 +12,25 @@ import (
 	"github.com/matt-godfrey/react-website/internal/database"
 )
 
+func register(w http.ResponseWriter, r *http.Request) {
+	// io.WriteString(w, "Hello from a HandleFunc #1!\n");
+	fmt.Println("Hello, stdout")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "registered",
+	})
+}
+
 func main() {
 	ctx := context.Background()
+	cfg := config{
+		addr: ":8080",
+		db:   dbConfig{},
+	}
+
+	api := application{
+		config: cfg,
+	}
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -32,8 +50,16 @@ func main() {
 	}
 	defer db.Close()
 
-	// create router, handlers, services here
+	// handlers
+	//
 
-	log.Println("server running on :8080")
-	http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/register", register)
+
+	if err := api.run(api.mount()); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	// log.Println("server running on :8080")
+	// http.ListenAndServe(":8080", nil)
 }
