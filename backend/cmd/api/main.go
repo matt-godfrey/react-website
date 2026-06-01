@@ -23,14 +23,6 @@ func register(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	ctx := context.Background()
-	cfg := config{
-		addr: ":8080",
-		db:   dbConfig{},
-	}
-
-	api := application{
-		config: cfg,
-	}
 
 	// Global logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
@@ -38,7 +30,7 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		slog.Error("Error loading .env file", err)
+		logger.Error("Error loading .env file", err.Error(), 3)
 	}
 
 	// DATABASE_URL=postgres://matt:yourpassword@localhost:5432/react_website?sslmode=disable
@@ -47,11 +39,23 @@ func main() {
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
-
 	DATABASE_URL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
-	db, err := database.Connect(ctx, DATABASE_URL)
+	cfg := config{
+		addr: ":8080",
+		db: dbConfig{
+			dsn: DATABASE_URL,
+		},
+	}
+	db, err := database.Connect(ctx, cfg.db.dsn)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	logger.Info("Connected to database")
+
+	api := application{
+		config: cfg,
+		db:     db,
 	}
 	defer db.Close()
 
