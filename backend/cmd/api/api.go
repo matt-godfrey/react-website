@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/matt-godfrey/react-website/internal/auth"
 )
 
 func (app *application) mount() http.Handler {
@@ -26,7 +27,13 @@ func (app *application) mount() http.Handler {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("All good"))
 	})
-	// http.ListenAndServe(":3000", r)
+
+	authService := auth.NewService()
+	authHandler := auth.NewHandler(authService)
+
+	r.Post("/register", authHandler.Register)
+	// r.Post("/login", )
+
 	return r
 
 }

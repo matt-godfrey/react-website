@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -31,9 +32,13 @@ func main() {
 		config: cfg,
 	}
 
+	// Global logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		slog.Error("Error loading .env file", err)
 	}
 
 	// DATABASE_URL=postgres://matt:yourpassword@localhost:5432/react_website?sslmode=disable
@@ -53,7 +58,7 @@ func main() {
 	// handlers
 	//
 
-	http.HandleFunc("/register", register)
+	// http.HandleFunc("/register", register)
 
 	if err := api.run(api.mount()); err != nil {
 		log.Fatal(err)
