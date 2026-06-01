@@ -7,7 +7,9 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matt-godfrey/react-website/internal/auth"
+	"github.com/matt-godfrey/react-website/internal/users"
 )
 
 func (app *application) mount() http.Handler {
@@ -28,7 +30,8 @@ func (app *application) mount() http.Handler {
 		w.Write([]byte("All good"))
 	})
 
-	authService := auth.NewService()
+	userRepo := users.NewRepository(app.db)
+	authService := auth.NewService(userRepo)
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
@@ -53,6 +56,7 @@ func (app *application) run(h http.Handler) error {
 
 type application struct {
 	config config
+	db     *pgxpool.Pool
 }
 
 type config struct {

@@ -1,19 +1,32 @@
 package auth
 
-import "context"
+import (
+	"context"
+
+	"github.com/matt-godfrey/react-website/internal/users"
+)
+
+type UserRepository interface {
+	CreateUser(ctx context.Context, username string, email string, passwordHash string) error
+	FindUserByEmail(ctx context.Context, email string) (*users.User, error)
+}
 
 type Service interface {
-	RegisterUser(ctx context.Context) error
+	RegisterUser(ctx context.Context, username string, email string, passwordHash string) error
 }
 
 type svc struct {
-	// repo
+	repo UserRepository
 }
 
-func NewService() Service {
-	return &svc{}
+func NewService(repo UserRepository) Service {
+	return &svc{
+		repo: repo,
+	}
 }
 
-func (s *svc) RegisterUser(ctx context.Context) error {
-	return nil
+func (s *svc) RegisterUser(ctx context.Context, username string, email string, passwordHash string) error {
+
+	err := s.repo.CreateUser(ctx, username, email, passwordHash)
+	return err
 }

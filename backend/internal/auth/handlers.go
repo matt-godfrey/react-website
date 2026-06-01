@@ -32,20 +32,20 @@ func NewHandler(service Service) *handler {
 }
 
 func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
-	err := h.service.RegisterUser(r.Context())
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	var creds Credentials
+	if err := stdjson.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	var creds Credentials
-	if err := stdjson.NewDecoder(r.Body).Decode(&creds); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	err := h.service.RegisterUser(r.Context(), creds.Username, creds.Email, creds.Password)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	log.Printf("%s %s %s", creds.Username, creds.Email, creds.Password)
