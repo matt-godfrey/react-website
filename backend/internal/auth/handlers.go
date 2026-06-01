@@ -32,14 +32,14 @@ func NewHandler(service Service) *handler {
 }
 
 func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
-	var creds Credentials
-	if err := stdjson.NewDecoder(r.Body).Decode(&creds); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	var creds Credentials
+	if err := stdjson.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	err := h.service.RegisterUser(r.Context(), creds.Username, creds.Email, creds.Password)
@@ -53,5 +53,22 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
+	var creds Credentials
+	if err := stdjson.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	user, err := h.service.LoginUser(r.Context(), creds.Email, creds.Password)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.Write(w, http.StatusOK, user)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/matt-godfrey/react-website/internal/users"
+	"github.com/matt-godfrey/react-website/internal/utils"
 )
 
 type UserRepository interface {
@@ -13,6 +14,7 @@ type UserRepository interface {
 
 type Service interface {
 	RegisterUser(ctx context.Context, username string, email string, passwordHash string) error
+	LoginUser(ctx context.Context, email string, passwordHash string) (*users.User, error)
 }
 
 type svc struct {
@@ -25,8 +27,33 @@ func NewService(repo UserRepository) Service {
 	}
 }
 
-func (s *svc) RegisterUser(ctx context.Context, username string, email string, passwordHash string) error {
+func (s *svc) RegisterUser(ctx context.Context, username string, email string, password string) error {
 
-	err := s.repo.CreateUser(ctx, username, email, passwordHash)
+	// TODO
+	// password and email verification
+
+	// hash password
+	hashedPassword, err := utils.HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.CreateUser(ctx, username, email, hashedPassword)
 	return err
+}
+
+func (s *svc) LoginUser(ctx context.Context, email string, password string) (*users.User, error) {
+
+	user, err := s.repo.FindUserByEmail(ctx, email)
+	if err != nil {
+		// log.Println(err)
+		return nil, err
+	}
+
+	// check password
+	if !utils.CheckPasswordHash(password, user.PasswordHash) {
+		return nil, utils.ErrInvalidPassword
+	}
+
+	return user, nil
 }

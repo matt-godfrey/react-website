@@ -51,3 +51,11 @@ func isUniqueViolation(err error) bool {
 	}
 	return false
 }
+
+func notFound(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "40001"
+	}
+	return false
+}
