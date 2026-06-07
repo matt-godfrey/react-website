@@ -86,12 +86,15 @@ func (s *svc) LoginUser(ctx context.Context, email string, password string) (str
 	return sessionId, nil
 }
 
+// Authenticate validates the session id and returns the user if valid
 func (s *svc) Authenticate(ctx context.Context, sessionId string) (*users.User, error) {
 	session, err := s.sessionsRepo.FindByID(ctx, sessionId)
 	if err != nil {
 		return nil, err
 	}
 
+	// check if session has expired
+	// if so, delete it and return an error
 	if time.Now().After(session.ExpiresAt) {
 		_ = s.sessionsRepo.Delete(ctx, session.Id)
 		return nil, errors.New("session expired")

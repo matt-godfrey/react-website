@@ -32,6 +32,7 @@ func NewHandler(service Service) *handler {
 	return &handler{service: service}
 }
 
+// Register handles the registration request
 func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -53,6 +54,7 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusOK, creds)
 }
 
+// Login handles the login request
 func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -82,6 +84,8 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusOK, sessionId)
 }
 
+// GetCurrentUser handles the get current user request for a session
+// It returns the current user if the session is valid, or an error if not
 func (h *handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -95,6 +99,7 @@ func (h *handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionId := cookie.Value
 
+	// if the session is valid, return the current user
 	user, err := h.service.Authenticate(r.Context(), sessionId)
 	if err != nil {
 		log.Println(err)

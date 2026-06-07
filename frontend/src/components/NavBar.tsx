@@ -15,7 +15,9 @@ export default function NavBar({}: NavBarProps) {
         <button>Log Out</button>
       ) : (
         <>
-          <Link to="/login">Login</Link>
+          <Link to="/login" className="[&.active]:font-bold">
+            Login
+          </Link>
           {/*<Link to="/register">Register</Link>*/}
         </>
       )}
