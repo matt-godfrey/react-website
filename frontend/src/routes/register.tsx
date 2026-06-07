@@ -1,8 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { loginSchema } from "../schemas/loginSchema";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldError,
@@ -10,25 +6,30 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { registerSchema } from "@/schemas/registerSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Controller, useForm } from "react-hook-form";
+import type z from "zod";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/register")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const form = useForm<z.infer<typeof loginSchema>>({
+  const form = useForm<z.infer<typeof registerSchema>>({
     defaultValues: {
       username: "",
       password: "",
+      confirmPassword: "",
       email: "",
     },
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+  const onSubmit = async (data: z.infer<typeof registerSchema>) => {
     console.log(data);
-    const endpoint = "http://localhost:8080/login";
+    const endpoint = "http://localhost:8080/register";
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -102,7 +103,7 @@ function RouteComponent() {
             )}
           ></Controller>
 
-          {/*<Controller
+          <Controller
             name="confirmPassword"
             control={form.control}
             render={({ field, fieldState }) => (
@@ -118,16 +119,8 @@ function RouteComponent() {
                 )}
               </Field>
             )}
-          ></Controller>*/}
-          <Button>Login</Button>
-          <div>
-            <p>
-              Don't have an account? Register{" "}
-              <Link to="/register" className="text-blue-800">
-                here.
-              </Link>
-            </p>
-          </div>
+          ></Controller>
+          <Button>Register</Button>
         </FieldGroup>
       </form>
     </div>
