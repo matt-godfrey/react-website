@@ -7,8 +7,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matt-godfrey/react-website/internal/auth"
+	"github.com/matt-godfrey/react-website/internal/sessions"
 	"github.com/matt-godfrey/react-website/internal/users"
 )
 
@@ -21,6 +23,17 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	// TODO: add proper allowed origins
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+		// AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
@@ -31,11 +44,14 @@ func (app *application) mount() http.Handler {
 	})
 
 	userRepo := users.NewRepository(app.db)
-	authService := auth.NewService(userRepo)
+	sessionRepo := sessions.NewRepository(app.db)
+	authService := auth.NewService(userRepo, sessionRepo)
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
 	r.Post("/login", authHandler.Login)
+
+	r.Get("/auth/me", authHandler.GetCurrentUser)
 
 	return r
 
