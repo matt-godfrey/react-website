@@ -74,6 +74,7 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "session_id",
 		Value:    sessionId,
 		HttpOnly: true,
+		Secure:   true,
 		Expires:  time.Now().Add(24 * time.Hour),
 	}
 	http.SetCookie(w, &cookie)
