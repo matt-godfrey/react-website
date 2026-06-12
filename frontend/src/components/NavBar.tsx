@@ -25,9 +25,9 @@ export default function NavBar({}: NavBarProps) {
 
     queryClient.setQueryData(["me"], null);
 
-    // if (!response.ok) {
-    //   throw new Error("Logout failed");
-    // }
+    if (!response.ok) {
+      throw new Error("Logout failed");
+    }
 
     queryClient.invalidateQueries({
       queryKey: ["me"],
@@ -37,25 +37,37 @@ export default function NavBar({}: NavBarProps) {
   };
   const isLoggedIn = !!user;
   console.log(user);
-  console.log(isLoggedIn);
   return (
-    <div className="p-4 m-2 flex gap-6">
-      <Link to="/" className="[&.active]:font-bold">
-        Home
-      </Link>
-      <Link to="/about" className="[&.active]:font-bold">
-        About
-      </Link>
-      {isLoggedIn ? (
-        <Button onClick={handleLogout}>Logout</Button>
-      ) : (
-        <>
-          <Link to="/login" className="[&.active]:font-bold">
-            Login
-          </Link>
-          {/*<Link to="/register">Register</Link>*/}
-        </>
-      )}
+    <div className="flex justify-between">
+      <div className="p-4 m-2 flex gap-6">
+        <Link to="/" className="[&.active]:font-bold">
+          Home
+        </Link>
+        <Link to="/about" className="[&.active]:font-bold">
+          About
+        </Link>
+      </div>
+      <div
+        className={
+          isLoggedIn
+            ? "flex items-center p-4 m-2 w-1/6 gap-4"
+            : "flex items-center p-4 m-2 mr-24"
+        }
+      >
+        {isLoggedIn ? (
+          <>
+            {user && <p>Hello, {user.Username}</p>}
+            <Button onClick={handleLogout}>Logout</Button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="[&.active]:font-bold">
+              Login
+            </Link>
+            {/*<Link to="/register">Register</Link>*/}
+          </>
+        )}
+      </div>
     </div>
   );
 }
