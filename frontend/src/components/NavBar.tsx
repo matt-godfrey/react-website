@@ -7,6 +7,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { Button } from "./ui/button";
+import LightDarkToggle from "./LightDarkToggle";
 interface NavBarProps {}
 
 export default function NavBar({}: NavBarProps) {
@@ -58,6 +59,7 @@ export default function NavBar({}: NavBarProps) {
           <>
             {user && <p>Hello, {user.Username}</p>}
             <Button onClick={handleLogout}>Logout</Button>
+            <LightDarkToggle></LightDarkToggle>
           </>
         ) : (
           <>
@@ -65,6 +67,7 @@ export default function NavBar({}: NavBarProps) {
               Login
             </Link>
             {/*<Link to="/register">Register</Link>*/}
+            <LightDarkToggle></LightDarkToggle>
           </>
         )}
       </div>
