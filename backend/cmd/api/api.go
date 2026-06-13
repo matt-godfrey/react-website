@@ -10,8 +10,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matt-godfrey/react-website/internal/auth"
+	"github.com/matt-godfrey/react-website/internal/quotes"
 	"github.com/matt-godfrey/react-website/internal/sessions"
 	"github.com/matt-godfrey/react-website/internal/users"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func (app *application) mount() http.Handler {
@@ -46,7 +48,8 @@ func (app *application) mount() http.Handler {
 
 	userRepo := users.NewRepository(app.db)
 	sessionRepo := sessions.NewRepository(app.db)
-	authService := auth.NewService(userRepo, sessionRepo)
+	quoteRepo := quotes.NewRepository(app.db, app.mongo)
+	authService := auth.NewService(userRepo, sessionRepo, quoteRepo)
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
@@ -74,6 +77,7 @@ func (app *application) run(h http.Handler) error {
 type application struct {
 	config config
 	db     *pgxpool.Pool
+	mongo  *mongo.Client
 }
 
 type config struct {
@@ -82,5 +86,6 @@ type config struct {
 }
 
 type dbConfig struct {
-	dsn string
+	dsn      string
+	mongoURI string
 }

@@ -23,6 +23,10 @@ type SessionRepository interface {
 	Delete(ctx context.Context, id string) error
 }
 
+type QuoteRepository interface {
+	// FindQuoteByID(ctx context.Context, id string) (*quotes.Quote, error)
+}
+
 type Service interface {
 	RegisterUser(ctx context.Context, username string, email string, passwordHash string) error
 	LoginUser(ctx context.Context, email string, passwordHash string) (string, error)
@@ -34,12 +38,14 @@ type Service interface {
 type svc struct {
 	usersRepo    UserRepository
 	sessionsRepo SessionRepository
+	quotesRepo   QuoteRepository
 }
 
-func NewService(usersRepo UserRepository, sessionsRepo SessionRepository) Service {
+func NewService(usersRepo UserRepository, sessionsRepo SessionRepository, quotesRepo QuoteRepository) Service {
 	return &svc{
 		usersRepo:    usersRepo,
 		sessionsRepo: sessionsRepo,
+		quotesRepo:   quotesRepo,
 	}
 }
 
