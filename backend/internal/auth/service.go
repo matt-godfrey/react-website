@@ -26,6 +26,7 @@ type SessionRepository interface {
 type Service interface {
 	RegisterUser(ctx context.Context, username string, email string, passwordHash string) error
 	LoginUser(ctx context.Context, email string, passwordHash string) (string, error)
+	LogoutUser(ctx context.Context, sessionId string) error
 	Authenticate(ctx context.Context, sessionId string) (*users.User, error)
 	CreateSession(ctx context.Context, userId int64, sessionId string) error
 }
@@ -84,6 +85,16 @@ func (s *svc) LoginUser(ctx context.Context, email string, password string) (str
 	}
 	//
 	return sessionId, nil
+}
+
+// LogoutUser handles the logout request
+func (s *svc) LogoutUser(ctx context.Context, sessionId string) error {
+
+	err := s.sessionsRepo.Delete(ctx, sessionId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Authenticate validates the session id and returns the user if valid

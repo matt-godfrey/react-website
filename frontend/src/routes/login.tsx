@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { loginSchema } from "../schemas/loginSchema";
+import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import {
   Field,
   FieldError,
@@ -17,6 +18,9 @@ export const Route = createFileRoute("/login")({
 });
 
 function RouteComponent() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const form = useForm<z.infer<typeof loginSchema>>({
     defaultValues: {
       username: "",
@@ -28,7 +32,8 @@ function RouteComponent() {
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
     console.log(data);
-    const endpoint = "http://localhost:8080/login";
+    const API_URL = import.meta.env.VITE_API_URL;
+    const endpoint = `${API_URL}/login`;
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -42,6 +47,11 @@ function RouteComponent() {
       const error = await response.json();
       throw new Error(error.message);
     }
+
+    await queryClient.refetchQueries({
+      queryKey: ["me"],
+    });
+    navigate({ to: "/" });
   };
 
   return (

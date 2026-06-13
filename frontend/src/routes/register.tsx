@@ -29,7 +29,8 @@ function RouteComponent() {
 
   const onSubmit = async (data: z.infer<typeof registerSchema>) => {
     console.log(data);
-    const endpoint = "http://localhost:8080/register";
+    const API_URL = import.meta.env.VITE_API_URL;
+    const endpoint = `${API_URL}/register`;
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {

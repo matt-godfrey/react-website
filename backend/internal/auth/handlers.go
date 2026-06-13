@@ -76,10 +76,42 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "session_id",
 		Value:    sessionId,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false, // change for prod
+		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(24 * time.Hour),
 	}
 	http.SetCookie(w, &cookie)
+
+	json.Write(w, http.StatusOK, sessionId)
+}
+
+// Logout handles the logout request
+func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		http.Error(w, "No session cookie", http.StatusUnauthorized)
+		return
+	}
+	sessionId := cookie.Value
+
+	err = h.service.LogoutUser(r.Context(), sessionId)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
 
 	json.Write(w, http.StatusOK, sessionId)
 }
