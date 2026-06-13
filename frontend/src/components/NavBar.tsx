@@ -57,7 +57,7 @@ export default function NavBar({}: NavBarProps) {
       >
         {isLoggedIn ? (
           <>
-            {user && <p>Hello, {user.Username}</p>}
+            {user && <p className="underline">Hello, {user.Username}</p>}
             <Button onClick={handleLogout}>Logout</Button>
             <LightDarkToggle></LightDarkToggle>
           </>
