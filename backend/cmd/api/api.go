@@ -49,7 +49,10 @@ func (app *application) mount() http.Handler {
 	userRepo := users.NewRepository(app.db)
 	sessionRepo := sessions.NewRepository(app.db)
 	quoteRepo := quotes.NewRepository(app.db, app.mongo)
-	authService := auth.NewService(userRepo, sessionRepo, quoteRepo)
+	quoteService := quotes.NewService(quoteRepo)
+	quoteHandler := quotes.NewHandler(quoteService)
+
+	authService := auth.NewService(userRepo, sessionRepo)
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
@@ -57,6 +60,7 @@ func (app *application) mount() http.Handler {
 	r.Post("/logout", authHandler.Logout)
 	r.Get("/auth/me", authHandler.GetCurrentUser)
 
+	r.Get("/quotes/random", quoteHandler.GetRandomQuote)
 	return r
 
 }
