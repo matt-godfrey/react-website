@@ -93,6 +93,7 @@ function RouteComponent() {
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>Password</FieldLabel>
                 <Input
+                  type="password"
                   id={field.name}
                   {...field}
                   aria-invalid={fieldState.invalid}
@@ -111,6 +112,7 @@ function RouteComponent() {
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>Confirm Password</FieldLabel>
                 <Input
+                  type="password"
                   id={field.name}
                   {...field}
                   aria-invalid={fieldState.invalid}
