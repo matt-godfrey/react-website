@@ -23,3 +23,13 @@ func (h *handler) GetRandomQuote(w http.ResponseWriter, r *http.Request) {
 
 	json.Write(w, http.StatusOK, quote)
 }
+
+func (h *handler) GetAllQuotesByAuthor(w http.ResponseWriter, r *http.Request) {
+	authors, err := h.service.GetAllQuotesByAuthor(r.Context(), r.URL.Query().Get("author"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.Write(w, http.StatusOK, authors)
+}

@@ -55,3 +55,30 @@ func (r *Repository) FindAllQuotes(ctx context.Context) ([]*Quote, error) {
 	}
 	return quotes, nil
 }
+
+func (r *Repository) FindAllQuotesByAuthor(ctx context.Context, author string) ([]*Quote, error) {
+	quotesCollection := r.mongo.Database("quotes").Collection("quotes")
+
+	filter := bson.M{"a": author}
+
+	cursor, err := quotesCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var quotes []*Quote
+	for cursor.Next(ctx) {
+		var q Quote
+		var mq mongoQuote
+		if err := cursor.Decode(&mq); err != nil {
+			return nil, err
+		}
+		q.Text = mq.Q
+		q.Author = mq.A
+		q.CharCount = mq.C
+		q.Html = mq.H
+		quotes = append(quotes, &q)
+	}
+	return quotes, nil
+}

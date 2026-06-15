@@ -61,6 +61,7 @@ func (app *application) mount() http.Handler {
 	r.Get("/auth/me", authHandler.GetCurrentUser)
 
 	r.Get("/quotes/random", quoteHandler.GetRandomQuote)
+	r.Get("/quotes/author", quoteHandler.GetAllQuotesByAuthor)
 	return r
 
 }

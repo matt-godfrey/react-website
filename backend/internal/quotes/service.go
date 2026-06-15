@@ -7,10 +7,12 @@ import (
 
 type QuoteRepository interface {
 	FindAllQuotes(ctx context.Context) ([]*Quote, error)
+	FindAllQuotesByAuthor(ctx context.Context, author string) ([]*Quote, error)
 }
 
 type Service interface {
 	GetRandomQuote(ctx context.Context) (*Quote, error)
+	GetAllQuotesByAuthor(ctx context.Context, author string) ([]*Quote, error)
 }
 
 type svc struct {
@@ -31,4 +33,12 @@ func (s *svc) GetRandomQuote(ctx context.Context) (*Quote, error) {
 	}
 	index := rand.Intn(len(quotes))
 	return quotes[index], nil
+}
+
+func (s *svc) GetAllQuotesByAuthor(ctx context.Context, author string) ([]*Quote, error) {
+	quotes, err := s.repo.FindAllQuotesByAuthor(ctx, author)
+	if err != nil {
+		return nil, err
+	}
+	return quotes, nil
 }
