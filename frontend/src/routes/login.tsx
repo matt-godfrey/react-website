@@ -83,6 +83,7 @@ function RouteComponent() {
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>Email</FieldLabel>
                 <Input
+                  type="email"
                   id={field.name}
                   {...field}
                   aria-invalid={fieldState.invalid}
