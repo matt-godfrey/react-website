@@ -10,8 +10,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matt-godfrey/react-website/internal/auth"
+	"github.com/matt-godfrey/react-website/internal/quotes"
 	"github.com/matt-godfrey/react-website/internal/sessions"
 	"github.com/matt-godfrey/react-website/internal/users"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func (app *application) mount() http.Handler {
@@ -46,6 +48,10 @@ func (app *application) mount() http.Handler {
 
 	userRepo := users.NewRepository(app.db)
 	sessionRepo := sessions.NewRepository(app.db)
+	quoteRepo := quotes.NewRepository(app.db, app.mongo)
+	quoteService := quotes.NewService(quoteRepo)
+	quoteHandler := quotes.NewHandler(quoteService)
+
 	authService := auth.NewService(userRepo, sessionRepo)
 	authHandler := auth.NewHandler(authService)
 
@@ -54,6 +60,8 @@ func (app *application) mount() http.Handler {
 	r.Post("/logout", authHandler.Logout)
 	r.Get("/auth/me", authHandler.GetCurrentUser)
 
+	r.Get("/quotes/random", quoteHandler.GetRandomQuote)
+	r.Get("/quotes/author", quoteHandler.GetAllQuotesByAuthor)
 	return r
 
 }
@@ -74,6 +82,7 @@ func (app *application) run(h http.Handler) error {
 type application struct {
 	config config
 	db     *pgxpool.Pool
+	mongo  *mongo.Client
 }
 
 type config struct {
@@ -82,5 +91,6 @@ type config struct {
 }
 
 type dbConfig struct {
-	dsn string
+	dsn      string
+	mongoURI string
 }

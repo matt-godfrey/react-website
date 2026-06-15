@@ -40,24 +40,33 @@ func main() {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	DATABASE_URL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
+	MONGO_URI := os.Getenv("MONGO_URI")
 	cfg := config{
 		addr: ":8080",
 		db: dbConfig{
-			dsn: DATABASE_URL,
+			dsn:      DATABASE_URL,
+			mongoURI: MONGO_URI,
 		},
 	}
 	db, err := database.Connect(ctx, cfg.db.dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger.Info("Connected to postgres database")
 
-	logger.Info("Connected to database")
+	mongoClient, err := database.NewMongoClient(cfg.db.mongoURI)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger.Info("Connected to mongo database")
 
 	api := application{
 		config: cfg,
 		db:     db,
+		mongo:  mongoClient,
 	}
 	defer db.Close()
+	defer mongoClient.Disconnect(ctx)
 
 	// handlers
 	//
