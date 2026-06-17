@@ -2,24 +2,14 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/matt-godfrey/react-website/internal/database"
 )
-
-func register(w http.ResponseWriter, r *http.Request) {
-	// io.WriteString(w, "Hello from a HandleFunc #1!\n");
-	fmt.Println("Hello, stdout")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "registered",
-	})
-}
 
 func main() {
 	ctx := context.Background()
