@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matt-godfrey/react-website/internal/auth"
+	appmiddleware "github.com/matt-godfrey/react-website/internal/middleware"
 	"github.com/matt-godfrey/react-website/internal/quotes"
 	"github.com/matt-godfrey/react-website/internal/sessions"
 	"github.com/matt-godfrey/react-website/internal/users"
@@ -20,10 +21,10 @@ func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
 	// A good base middleware stack
-	r.Use(middleware.RequestID) // important for rate limiting
-	r.Use(middleware.RealIP)    // important for rate limiting and analytics
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r.Use(chimiddleware.RequestID) // important for rate limiting
+	r.Use(chimiddleware.RealIP)    // important for rate limiting and analytics
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
 
 	// TODO: add proper allowed origins
 	r.Use(cors.Handler(cors.Options{
@@ -40,11 +41,13 @@ func (app *application) mount() http.Handler {
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(chimiddleware.Timeout(60 * time.Second))
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("All good"))
 	})
+
+	slidingWindowRateLimiter := appmiddleware.NewSlidingWindowRateLimiter(5, 1*time.Minute)
 
 	userRepo := users.NewRepository(app.db)
 	sessionRepo := sessions.NewRepository(app.db)
@@ -56,7 +59,8 @@ func (app *application) mount() http.Handler {
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
-	r.Post("/login", authHandler.Login)
+
+	r.With(appmiddleware.RateLimiterMiddleware(slidingWindowRateLimiter)).Post("/login", authHandler.Login)
 	r.Post("/logout", authHandler.Logout)
 	r.Get("/auth/me", authHandler.GetCurrentUser)
 
