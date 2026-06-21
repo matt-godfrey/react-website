@@ -3,6 +3,8 @@ package middleware
 import (
 	"sync"
 	"time"
+
+	"github.com/go-chi/httprate"
 )
 
 type RateLimiter interface {
@@ -20,6 +22,15 @@ type SlidingWindowRateLimiter struct {
 	clients map[string][]time.Time
 	limit   int
 	window  time.Duration
+}
+
+type ChiRateLimiter struct {
+	rl *httprate.RateLimiter
+}
+
+func NewChiRateLimiter(limit int, window time.Duration, options ...httprate.Option) *ChiRateLimiter {
+	return &ChiRateLimiter{
+		rl: httprate.NewRateLimiter(limit, window, options...)}
 }
 
 func NewSlidingWindowRateLimiter(limit int, window time.Duration) *SlidingWindowRateLimiter {

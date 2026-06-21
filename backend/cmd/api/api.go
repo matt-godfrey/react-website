@@ -3,11 +3,15 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
+	httprateredis "github.com/go-chi/httprate-redis"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matt-godfrey/react-website/internal/auth"
 	appmiddleware "github.com/matt-godfrey/react-website/internal/middleware"
@@ -47,7 +51,17 @@ func (app *application) mount() http.Handler {
 		w.Write([]byte("All good"))
 	})
 
-	slidingWindowRateLimiter := appmiddleware.NewSlidingWindowRateLimiter(5, 1*time.Minute)
+	// slidingWindowRateLimiter := appmiddleware.NewSlidingWindowRateLimiter(5, 1*time.Minute)
+
+	host := os.Getenv("VALKEY_HOST")
+	port, err := strconv.Atoi(os.Getenv("VALKEY_PORT"))
+	if err != nil {
+		port = 6379
+	}
+
+	dscfg := httprateredis.Config{Host: host, Port: uint16(port)}
+	keyFuncs := httprate.WithKeyFuncs(httprate.KeyByIP)
+	chiRateLimiter := appmiddleware.NewChiRateLimiter(3, 10*time.Second, keyFuncs, httprateredis.WithRedisLimitCounter(&dscfg))
 
 	userRepo := users.NewRepository(app.db)
 	sessionRepo := sessions.NewRepository(app.db)
@@ -60,7 +74,8 @@ func (app *application) mount() http.Handler {
 
 	r.Post("/register", authHandler.Register)
 
-	r.With(appmiddleware.RateLimiterMiddleware(slidingWindowRateLimiter)).Post("/login", authHandler.Login)
+	// r.With(appmiddleware.RateLimiterMiddleware(slidingWindowRateLimiter)).Post("/login", authHandler.Login)
+	r.With(appmiddleware.ChiRateLimiterMiddleware(chiRateLimiter)).Post("/login", authHandler.Login)
 	r.Post("/logout", authHandler.Logout)
 	r.Get("/auth/me", authHandler.GetCurrentUser)
 
