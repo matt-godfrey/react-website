@@ -24,3 +24,7 @@ func RateLimiterMiddleware(rl RateLimiter) func(http.Handler) http.Handler {
 		})
 	}
 }
+
+func ChiRateLimiterMiddleware(rl *ChiRateLimiter) func(http.Handler) http.Handler {
+	return rl.rl.Handler
+}
