@@ -14,6 +14,7 @@ import (
 	httprateredis "github.com/go-chi/httprate-redis"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/matt-godfrey/react-website/internal/auth"
+	"github.com/matt-godfrey/react-website/internal/mailer"
 	appmiddleware "github.com/matt-godfrey/react-website/internal/middleware"
 	"github.com/matt-godfrey/react-website/internal/quotes"
 	"github.com/matt-godfrey/react-website/internal/sessions"
@@ -69,7 +70,10 @@ func (app *application) mount() http.Handler {
 	quoteService := quotes.NewService(quoteRepo)
 	quoteHandler := quotes.NewHandler(quoteService)
 
-	authService := auth.NewService(userRepo, sessionRepo)
+	from := os.Getenv("RESEND_FROM")
+	mailer := mailer.NewResendMailer(os.Getenv("RESEND_API_KEY"), from)
+
+	authService := auth.NewService(userRepo, sessionRepo, mailer)
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
