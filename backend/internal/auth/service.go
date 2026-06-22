@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/matt-godfrey/react-website/internal/mailer"
 	"github.com/matt-godfrey/react-website/internal/sessions"
 	"github.com/matt-godfrey/react-website/internal/users"
 	"github.com/matt-godfrey/react-website/internal/utils"
@@ -34,12 +36,14 @@ type Service interface {
 type svc struct {
 	usersRepo    UserRepository
 	sessionsRepo SessionRepository
+	mailer       mailer.Mailer
 }
 
-func NewService(usersRepo UserRepository, sessionsRepo SessionRepository) Service {
+func NewService(usersRepo UserRepository, sessionsRepo SessionRepository, mailer mailer.Mailer) Service {
 	return &svc{
 		usersRepo:    usersRepo,
 		sessionsRepo: sessionsRepo,
+		mailer:       mailer,
 	}
 }
 
@@ -83,7 +87,19 @@ func (s *svc) LoginUser(ctx context.Context, email string, password string) (str
 	if err != nil {
 		return "", err
 	}
-	//
+	// Send mail
+	msg := mailer.Message{
+		From:    os.Getenv("RESEND_FROM"),
+		To:      []string{user.Email},
+		Subject: "Login Successful",
+		HTML:    "<p>You have successfully logged in to your account.</p>",
+		Text:    "You have successfully logged in to your account.",
+	}
+	_, err = s.mailer.SendMail(ctx, msg)
+	if err != nil {
+		return "", err
+	}
+
 	return sessionId, nil
 }
 
