@@ -82,19 +82,6 @@ func (s *svc) RegisterUser(ctx context.Context, username string, email string, p
 		return err
 	}
 
-	// // Send mail
-	// msg := mailer.Message{
-	// 	From:    os.Getenv("RESEND_FROM"),
-	// 	To:      []string{user.Email},
-	// 	Subject: "Login Successful",
-	// 	HTML:    "<p>You have successfully logged in to your account.</p>",
-	// 	Text:    "You have successfully logged in to your account.",
-	// }
-	// _, err = s.mailer.SendMail(ctx, msg)
-	// if err != nil {
-	// 	return err
-	// }
-
 	return nil
 }
 

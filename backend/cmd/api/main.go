@@ -24,7 +24,6 @@ func main() {
 		logger.Error("Error loading .env file", err.Error(), 3)
 	}
 
-	// DATABASE_URL=postgres://matt:yourpassword@localhost:5432/react_website?sslmode=disable
 	dbName := os.Getenv("DB_NAME")
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -32,6 +31,7 @@ func main() {
 	dbPort := os.Getenv("DB_PORT")
 	DATABASE_URL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
 	MONGO_URI := os.Getenv("MONGO_URI")
+
 	cfg := config{
 		addr: ":8080",
 		db: dbConfig{
@@ -74,16 +74,8 @@ func main() {
 	defer mongoClient.Disconnect(ctx)
 	defer api.rabbitConn.Close()
 
-	// handlers
-	//
-
-	// http.HandleFunc("/register", register)
-
 	if err := api.run(api.mount()); err != nil {
 		log.Fatal(err)
 		os.Exit(1)
 	}
-
-	// log.Println("server running on :8080")
-	// http.ListenAndServe(":8080", nil)
 }

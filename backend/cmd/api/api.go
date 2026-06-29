@@ -87,8 +87,6 @@ func (app *application) mount() http.Handler {
 		log.Fatal(err)
 	}
 
-	// defer rabbitClient.Close()
-
 	authService := auth.NewService(userRepo, sessionRepo, mailer, rabbitClient)
 	authHandler := auth.NewHandler(authService)
 
