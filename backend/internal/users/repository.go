@@ -17,16 +17,29 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) CreateUser(ctx context.Context, username string, email string, passwordHash string, isActive bool, createdAt time.Time) error {
+func (r *Repository) CreateUser(ctx context.Context, username string, email string, passwordHash string, isActive bool, createdAt time.Time) (*User, error) {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO users (username, email, password_hash, is_active, created_at)
 		VALUES ($1, $2, $3, $4, $5)
 	`, username, email, passwordHash, isActive, createdAt)
 
 	if isUniqueViolation(err) {
-		return ErrUserAlreadyExists
+		return nil, ErrUserAlreadyExists
 	}
-	return err
+
+	if err != nil {
+		return nil, err
+	}
+
+	user := &User{
+		Username:     username,
+		Email:        email,
+		PasswordHash: passwordHash,
+		IsActive:     isActive,
+		CreatedAt:    createdAt,
+	}
+
+	return user, nil
 }
 
 func (r *Repository) FindUserByEmail(ctx context.Context, email string) (*User, error) {

@@ -16,9 +16,11 @@ import (
 	"github.com/matt-godfrey/react-website/internal/auth"
 	"github.com/matt-godfrey/react-website/internal/mailer"
 	appmiddleware "github.com/matt-godfrey/react-website/internal/middleware"
+	"github.com/matt-godfrey/react-website/internal/queue"
 	"github.com/matt-godfrey/react-website/internal/quotes"
 	"github.com/matt-godfrey/react-website/internal/sessions"
 	"github.com/matt-godfrey/react-website/internal/users"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -73,7 +75,21 @@ func (app *application) mount() http.Handler {
 	from := os.Getenv("RESEND_FROM")
 	mailer := mailer.NewResendMailer(os.Getenv("RESEND_API_KEY"), from)
 
-	authService := auth.NewService(userRepo, sessionRepo, mailer)
+	rabbitClient, err := queue.NewRabbitClient(app.rabbitConn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = rabbitClient.CreateQueue("email", true, false)
+	err = rabbitClient.CreateExchange("email", "direct", true, false)
+	err = rabbitClient.CreateBinding("email", "email", "email")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// defer rabbitClient.Close()
+
+	authService := auth.NewService(userRepo, sessionRepo, mailer, rabbitClient)
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
@@ -103,9 +119,10 @@ func (app *application) run(h http.Handler) error {
 }
 
 type application struct {
-	config config
-	db     *pgxpool.Pool
-	mongo  *mongo.Client
+	config     config
+	db         *pgxpool.Pool
+	mongo      *mongo.Client
+	rabbitConn *amqp.Connection
 }
 
 type config struct {

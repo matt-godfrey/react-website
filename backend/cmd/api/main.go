@@ -9,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/matt-godfrey/react-website/internal/database"
+	"github.com/matt-godfrey/react-website/internal/queue"
 )
 
 func main() {
@@ -50,13 +51,28 @@ func main() {
 	}
 	logger.Info("Connected to mongo database")
 
+	rabbitMQUser := os.Getenv("RABBITMQ_USER")
+	rabbitMQPassword := os.Getenv("RABBITMQ_PASSWORD")
+	rabbitMQHost := os.Getenv("RABBITMQ_HOST")
+	rabbitMQVHost := os.Getenv("RABBITMQ_VHOST")
+
+	rabbitConn, err := queue.ConnectRabbitMQ(rabbitMQUser, rabbitMQPassword, rabbitMQHost, rabbitMQVHost)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger.Info("Connected to rabbitmq")
+
+	defer rabbitConn.Close()
+
 	api := application{
-		config: cfg,
-		db:     db,
-		mongo:  mongoClient,
+		config:     cfg,
+		db:         db,
+		mongo:      mongoClient,
+		rabbitConn: rabbitConn,
 	}
 	defer db.Close()
 	defer mongoClient.Disconnect(ctx)
+	defer api.rabbitConn.Close()
 
 	// handlers
 	//
