@@ -4,17 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/matt-godfrey/react-website/internal/mailer"
+	"github.com/matt-godfrey/react-website/internal/queue"
 	"github.com/matt-godfrey/react-website/internal/sessions"
 	"github.com/matt-godfrey/react-website/internal/users"
 	"github.com/matt-godfrey/react-website/internal/utils"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, username string, email string, passwordHash string, isActive bool, createdAt time.Time) error
+	CreateUser(ctx context.Context, username string, email string, passwordHash string, isActive bool, createdAt time.Time) (*users.User, error)
 	FindUserByEmail(ctx context.Context, email string) (*users.User, error)
 	FindByID(ctx context.Context, id int64) (*users.User, error)
 }
@@ -37,13 +38,15 @@ type svc struct {
 	usersRepo    UserRepository
 	sessionsRepo SessionRepository
 	mailer       mailer.Mailer
+	rabbitmq     *queue.RabbitClient
 }
 
-func NewService(usersRepo UserRepository, sessionsRepo SessionRepository, mailer mailer.Mailer) Service {
+func NewService(usersRepo UserRepository, sessionsRepo SessionRepository, mailer mailer.Mailer, rabbitmq *queue.RabbitClient) Service {
 	return &svc{
 		usersRepo:    usersRepo,
 		sessionsRepo: sessionsRepo,
 		mailer:       mailer,
+		rabbitmq:     rabbitmq,
 	}
 }
 
@@ -61,8 +64,38 @@ func (s *svc) RegisterUser(ctx context.Context, username string, email string, p
 	isActive := true
 	createdAt := time.Now()
 
-	err = s.usersRepo.CreateUser(ctx, username, email, hashedPassword, isActive, createdAt)
-	return err
+	user, err := s.usersRepo.CreateUser(ctx, username, email, hashedPassword, isActive, createdAt)
+
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	err = s.rabbitmq.Send(ctx, "email", "email", amqp.Publishing{
+		ContentType:  "text/plain",
+		DeliveryMode: amqp.Persistent,
+		Body:         []byte("Register Successful"),
+		Headers:      amqp.Table{"user_id": user.ID, "username": username, "email": email},
+	})
+	if err != nil {
+		return err
+	}
+
+	// // Send mail
+	// msg := mailer.Message{
+	// 	From:    os.Getenv("RESEND_FROM"),
+	// 	To:      []string{user.Email},
+	// 	Subject: "Login Successful",
+	// 	HTML:    "<p>You have successfully logged in to your account.</p>",
+	// 	Text:    "You have successfully logged in to your account.",
+	// }
+	// _, err = s.mailer.SendMail(ctx, msg)
+	// if err != nil {
+	// 	return err
+	// }
+
+	return nil
 }
 
 func (s *svc) LoginUser(ctx context.Context, email string, password string) (string, error) {
@@ -84,18 +117,6 @@ func (s *svc) LoginUser(ctx context.Context, email string, password string) (str
 
 	// store session in db
 	err = s.CreateSession(ctx, user.ID, sessionId)
-	if err != nil {
-		return "", err
-	}
-	// Send mail
-	msg := mailer.Message{
-		From:    os.Getenv("RESEND_FROM"),
-		To:      []string{user.Email},
-		Subject: "Login Successful",
-		HTML:    "<p>You have successfully logged in to your account.</p>",
-		Text:    "You have successfully logged in to your account.",
-	}
-	_, err = s.mailer.SendMail(ctx, msg)
 	if err != nil {
 		return "", err
 	}
