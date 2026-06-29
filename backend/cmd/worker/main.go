@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
 
 	"github.com/joho/godotenv"
 	"github.com/matt-godfrey/react-website/internal/mailer"
@@ -16,7 +17,6 @@ func main() {
 
 	from := os.Getenv("RESEND_FROM")
 	mailerClient := mailer.NewResendMailer(os.Getenv("RESEND_API_KEY"), from)
-	log.Printf("API Key: %s", os.Getenv("RESEND_API_KEY"))
 	if mailerClient == nil {
 		log.Fatal("mailerClient is nil")
 	}
@@ -44,8 +44,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var blocking chan struct{}
-
+	// var blocking chan struct{}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 	go func() {
 		for message := range messageBus {
 			log.Printf("Headers: %v", message.Headers)
@@ -79,6 +80,7 @@ func main() {
 		}
 	}()
 
-	log.Println("Consuming; to close the program press Ctrl+C")
-	<-blocking
+	log.Println("Consuming; to shutdown press Ctrl+C")
+	// <-blocking
+	<-ctx.Done()
 }
