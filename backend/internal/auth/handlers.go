@@ -2,22 +2,12 @@ package auth
 
 import (
 	stdjson "encoding/json"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/matt-godfrey/react-website/internal/json"
 )
 
-// type RegisterRequest struct {
-// 	Email    string `json:"email"`
-// 	Password string `json:"password"`
-// }
-
-//	type LoginRequest struct {
-//		Email    string `json:"email"`
-//		Password string `json:"password"`
-//	}
 type Credentials struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
@@ -46,11 +36,9 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.service.RegisterUser(r.Context(), creds.Username, creds.Email, creds.Password)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Printf("%s %s %s", creds.Username, creds.Email, creds.Password)
 	json.Write(w, http.StatusOK, creds)
 }
 
@@ -68,7 +56,6 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionId, err := h.service.LoginUser(r.Context(), creds.Email, creds.Password)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -101,7 +88,6 @@ func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.LogoutUser(r.Context(), sessionId)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -134,8 +120,9 @@ func (h *handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	// if the session is valid, return the current user
 	user, err := h.service.Authenticate(r.Context(), sessionId)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		// http.Error(w, err.Error(), http.StatusUnauthorized)
+		// Returning 200 OK with nil user
+		json.Write(w, http.StatusOK, nil)
 		return
 	}
 	json.Write(w, http.StatusOK, user)

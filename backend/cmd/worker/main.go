@@ -16,7 +16,7 @@ func main() {
 	err := godotenv.Load()
 	ctx := context.Background()
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil)).With("worker", "main")
 	slog.SetDefault(logger)
 
 	from := os.Getenv("RESEND_FROM")

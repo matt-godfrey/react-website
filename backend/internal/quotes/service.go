@@ -2,6 +2,7 @@ package quotes
 
 import (
 	"context"
+	"log/slog"
 	"math/rand"
 )
 
@@ -16,11 +17,12 @@ type Service interface {
 }
 
 type svc struct {
-	repo QuoteRepository
+	logger *slog.Logger
+	repo   QuoteRepository
 }
 
-func NewService(repo QuoteRepository) Service {
-	return &svc{repo: repo}
+func NewService(logger *slog.Logger, repo QuoteRepository) Service {
+	return &svc{logger: logger, repo: repo}
 }
 
 func (s *svc) GetRandomQuote(ctx context.Context) (*Quote, error) {
