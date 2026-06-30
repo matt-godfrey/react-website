@@ -1,18 +1,12 @@
 import { getCurrentUserQuery } from "@/api/getCurrentUserQuery";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  createRootRoute,
-  Link,
-  Outlet,
-  useNavigate,
-} from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "./ui/button";
 import LightDarkToggle from "./LightDarkToggle";
 interface NavBarProps {}
 
 export default function NavBar({}: NavBarProps) {
   const { data: user } = useQuery(getCurrentUserQuery());
-  console.log(user);
   const API_URL = import.meta.env.VITE_API_URL;
   const endpoint = `${API_URL}/logout`;
   const queryClient = useQueryClient();
@@ -37,7 +31,6 @@ export default function NavBar({}: NavBarProps) {
     navigate({ to: "/" });
   };
   const isLoggedIn = !!user;
-  console.log(user);
   return (
     <div className="flex justify-between">
       <div className="p-4 m-2 flex gap-6">

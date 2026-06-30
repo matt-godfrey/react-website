@@ -31,7 +31,6 @@ function RouteComponent() {
   });
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
-    console.log(data);
     const API_URL = import.meta.env.VITE_API_URL;
     const endpoint = `${API_URL}/login`;
     const response = await fetch(endpoint, {

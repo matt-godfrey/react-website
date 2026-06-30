@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 
@@ -15,10 +16,13 @@ func main() {
 	err := godotenv.Load()
 	ctx := context.Background()
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	from := os.Getenv("RESEND_FROM")
 	mailerClient := mailer.NewResendMailer(os.Getenv("RESEND_API_KEY"), from)
 	if mailerClient == nil {
-		log.Fatal("mailerClient is nil")
+		logger.Warn("mailerClient is nil")
 	}
 
 	rabbitMQUser := os.Getenv("RABBITMQ_USER")
@@ -30,7 +34,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Connected to rabbitmq")
 
 	defer rabbitConn.Close()
 
@@ -41,7 +44,7 @@ func main() {
 
 	messageBus, err := client.Consume("email", "email-service", false)
 	if err != nil {
-		log.Fatal(err)
+		logger.Warn("Failed to consume email queue", "error", err.Error())
 	}
 
 	// var blocking chan struct{}
@@ -49,7 +52,7 @@ func main() {
 	defer stop()
 	go func() {
 		for message := range messageBus {
-			log.Printf("Headers: %v", message.Headers)
+			logger.Debug("Headers:", "headers", message.Headers)
 
 			email, ok := message.Headers["email"].(string)
 			if !ok || email == "" {
@@ -73,14 +76,14 @@ func main() {
 			}
 
 			if err := message.Ack(false); err != nil {
-				log.Printf("Failed to ack message: %v", err)
+				logger.Warn("Failed to ack message:", "error", err.Error())
 				continue
 			}
-			log.Printf("Message acknowledged: %s", string(message.Body))
+			logger.Info("Message acknowledged:", "body", string(message.Body))
 		}
 	}()
 
-	log.Println("Consuming; to shutdown press Ctrl+C")
+	logger.Info("Consuming; to shutdown press Ctrl+C")
 	// <-blocking
 	<-ctx.Done()
 }
