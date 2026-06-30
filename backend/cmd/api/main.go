@@ -65,6 +65,7 @@ func main() {
 	defer rabbitConn.Close()
 
 	api := application{
+		logger:     logger,
 		config:     cfg,
 		db:         db,
 		mongo:      mongoClient,

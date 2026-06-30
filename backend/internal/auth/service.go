@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/matt-godfrey/react-website/internal/mailer"
@@ -35,14 +36,16 @@ type Service interface {
 }
 
 type svc struct {
+	logger       *slog.Logger
 	usersRepo    UserRepository
 	sessionsRepo SessionRepository
 	mailer       mailer.Mailer
 	rabbitmq     *queue.RabbitClient
 }
 
-func NewService(usersRepo UserRepository, sessionsRepo SessionRepository, mailer mailer.Mailer, rabbitmq *queue.RabbitClient) Service {
+func NewService(logger *slog.Logger, usersRepo UserRepository, sessionsRepo SessionRepository, mailer mailer.Mailer, rabbitmq *queue.RabbitClient) Service {
 	return &svc{
+		logger:       logger,
 		usersRepo:    usersRepo,
 		sessionsRepo: sessionsRepo,
 		mailer:       mailer,

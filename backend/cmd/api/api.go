@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -25,6 +26,10 @@ import (
 )
 
 func (app *application) mount() http.Handler {
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	r := chi.NewRouter()
 
 	// A good base middleware stack
@@ -69,7 +74,7 @@ func (app *application) mount() http.Handler {
 	userRepo := users.NewRepository(app.db)
 	sessionRepo := sessions.NewRepository(app.db)
 	quoteRepo := quotes.NewRepository(app.db, app.mongo)
-	quoteService := quotes.NewService(quoteRepo)
+	quoteService := quotes.NewService(logger, quoteRepo)
 	quoteHandler := quotes.NewHandler(quoteService)
 
 	from := os.Getenv("RESEND_FROM")
@@ -87,7 +92,7 @@ func (app *application) mount() http.Handler {
 		log.Fatal(err)
 	}
 
-	authService := auth.NewService(userRepo, sessionRepo, mailer, rabbitClient)
+	authService := auth.NewService(logger, userRepo, sessionRepo, mailer, rabbitClient)
 	authHandler := auth.NewHandler(authService)
 
 	r.Post("/register", authHandler.Register)
@@ -117,6 +122,7 @@ func (app *application) run(h http.Handler) error {
 }
 
 type application struct {
+	logger     *slog.Logger
 	config     config
 	db         *pgxpool.Pool
 	mongo      *mongo.Client
