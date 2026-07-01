@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import "./App.css";
 import Quote from "./components/Quote";
 
