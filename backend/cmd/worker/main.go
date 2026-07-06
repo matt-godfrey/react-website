@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
+	_ = godotenv.Load()
 	ctx := context.Background()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil)).With("worker", "main")

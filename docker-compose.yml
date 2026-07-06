@@ -1,4 +1,20 @@
 services:
+  postgres:
+    image: postgres:18
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - postgres_data:/var/lib/postgresql
   valkey:
     image: valkey/valkey:latest
     ports:
@@ -9,12 +25,56 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 5672:5672
       - 15672:15672
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  api:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    command: ./api
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+
+  worker:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    command: ./worker
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+
+  migrate:
+    build: ./backend
+    command: sh -c 'goose -dir ./migrations up postgres "$GOOSE_DBSTRING"'
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   valkey_data:
   rabbitmq_data:
+  postgres_data:
