@@ -8,11 +8,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { registerSchema } from "@/schemas/registerSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "@tanstack/react-router";
-
-import { useQueryClient } from "@tanstack/react-query";
 
 import type z from "zod";
 

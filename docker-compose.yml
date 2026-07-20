@@ -1,4 +1,14 @@
 services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - postgres
+      - valkey
+      - rabbitmq
+      - api
+
   postgres:
     image: postgres:18
     ports:
