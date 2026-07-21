@@ -7,7 +7,7 @@ interface NavBarProps {}
 
 export default function NavBar({}: NavBarProps) {
   const { data: user } = useQuery(getCurrentUserQuery());
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = "api"
   const endpoint = `${API_URL}/logout`;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
