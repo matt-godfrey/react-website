@@ -65,8 +65,8 @@ func main() {
 				From:    from,
 				To:      []string{message.Headers["email"].(string)},
 				Subject: "Login Successful",
-				HTML:    "<p>You have successfully logged in to your account.</p>",
-				Text:    "You have successfully logged in to your account.",
+				HTML:    "<p>You have successfully registered a new account.</p>",
+				Text:    "You have successfully registered a new account.",
 			}
 			_, err = mailerClient.SendMail(ctx, msg)
 

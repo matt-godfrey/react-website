@@ -13,6 +13,12 @@ RUN go build -o worker ./cmd/worker
 
 FROM debian:bookworm-slim
 
+# Install standard CA certificate bundle
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY --from=build /app/api .
