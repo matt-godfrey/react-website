@@ -42,12 +42,12 @@ func (r *Repository) CreateUser(ctx context.Context, username string, email stri
 	return user, nil
 }
 
-func (r *Repository) FindUserByEmail(ctx context.Context, email string) (*User, error) {
+func (r *Repository) FindUserByEmailAndUsername(ctx context.Context, email string, username string) (*User, error) {
 	row := r.db.QueryRow(ctx, `
 		SELECT id, username, email, password_hash, is_active, created_at
 		FROM users
-		WHERE email = $1
-	`, email)
+		WHERE email = $1 AND username = $2
+	`, email, username)
 
 	var user User
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.IsActive, &user.CreatedAt)
