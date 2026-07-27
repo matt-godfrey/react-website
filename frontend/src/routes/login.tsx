@@ -155,7 +155,7 @@ function RouteComponent() {
         </FieldGroup>
       </form>
       {form.formState.errors.root?.message && (
-        <p className="text-red-">{form.formState.errors.root.message}</p>
+        <p className="text-red-800 p-4">{form.formState.errors.root.message}</p>
       )}
     </div>
   );
