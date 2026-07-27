@@ -71,8 +71,8 @@ func (app *application) mount() http.Handler {
 	dscfg := httprateredis.Config{Host: host, Port: uint16(port)}
 	keyFuncs := httprate.WithKeyFuncs(httprate.KeyByIP)
 	chiRateLimiter := appmiddleware.NewChiRateLimiter(
-		3,
-		10*time.Second,
+		10,
+		60*time.Second,
 		keyFuncs,
 		httprateredis.WithRedisLimitCounter(&dscfg),
 		httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
