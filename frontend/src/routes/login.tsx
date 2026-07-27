@@ -31,26 +31,39 @@ function RouteComponent() {
   });
 
   const onSubmit = async (data: z.infer<typeof loginSchema>) => {
-    const API_URL = "api"
-    const endpoint = `${API_URL}/login`;
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(data),
-    });
+    const endpoint = "/api/login";
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error ?? "Login failed.");
+      }
+
+      await queryClient.refetchQueries({
+        queryKey: ["me"],
+      });
+
+      navigate({ to: "/" });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Login failed.";
+
+      console.error(errorMessage);
+
+      form.setError("root", {
+        message: errorMessage,
+      });
     }
-
-    await queryClient.refetchQueries({
-      queryKey: ["me"],
-    });
-    navigate({ to: "/" });
   };
 
   return (
@@ -141,6 +154,9 @@ function RouteComponent() {
           </div>
         </FieldGroup>
       </form>
+      {form.formState.errors.root?.message && (
+        <p className="text-red-">{form.formState.errors.root.message}</p>
+      )}
     </div>
   );
 }

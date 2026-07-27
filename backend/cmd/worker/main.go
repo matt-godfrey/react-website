@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/matt-godfrey/react-website/internal/mailer"
 	"github.com/matt-godfrey/react-website/internal/queue"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
@@ -38,6 +39,9 @@ func main() {
 	defer rabbitConn.Close()
 
 	client, err := queue.NewRabbitClient(rabbitConn)
+	client.CreateQueue("email", true, false)
+	client.CreateExchange("email", amqp.ExchangeDirect, true, false)
+	client.CreateBinding("email", "email", "email")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -69,7 +70,20 @@ func (app *application) mount() http.Handler {
 
 	dscfg := httprateredis.Config{Host: host, Port: uint16(port)}
 	keyFuncs := httprate.WithKeyFuncs(httprate.KeyByIP)
-	chiRateLimiter := appmiddleware.NewChiRateLimiter(3, 10*time.Second, keyFuncs, httprateredis.WithRedisLimitCounter(&dscfg))
+	chiRateLimiter := appmiddleware.NewChiRateLimiter(
+		3,
+		10*time.Second,
+		keyFuncs,
+		httprateredis.WithRedisLimitCounter(&dscfg),
+		httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"error": "Too many requests",
+			})
+		}),
+	)
 
 	userRepo := users.NewRepository(app.db)
 	sessionRepo := sessions.NewRepository(app.db)

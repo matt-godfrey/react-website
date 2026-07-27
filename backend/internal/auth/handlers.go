@@ -2,10 +2,12 @@ package auth
 
 import (
 	stdjson "encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/matt-godfrey/react-website/internal/json"
+	"github.com/matt-godfrey/react-website/internal/utils"
 )
 
 type Credentials struct {
@@ -51,14 +53,34 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	var creds Credentials
 	if err := stdjson.NewDecoder(r.Body).Decode(&creds); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		// http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		stdjson.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid JSON",
+		})
 		return
 	}
-	sessionId, err := h.service.LoginUser(r.Context(), creds.Email, creds.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	sessionId, err := h.service.LoginUser(r.Context(), creds.Email, creds.Username, creds.Password)
+	if errors.Is(err, utils.ErrInvalidCredentials) {
+		// http.Error(w, err.Error(), http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+
+		stdjson.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid credentials",
+		})
+		return
+	} else if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+
+		stdjson.NewEncoder(w).Encode(map[string]string{
+			"error": "Internal server error",
+		})
 		return
 	}
+
 	cookie := http.Cookie{
 		Name:     "session_id",
 		Value:    sessionId,

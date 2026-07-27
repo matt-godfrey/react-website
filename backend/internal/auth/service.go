@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -17,7 +18,7 @@ import (
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, username string, email string, passwordHash string, isActive bool, createdAt time.Time) (*users.User, error)
-	FindUserByEmail(ctx context.Context, email string) (*users.User, error)
+	FindUserByEmailAndUsername(ctx context.Context, email string, username string) (*users.User, error)
 	FindByID(ctx context.Context, id int64) (*users.User, error)
 }
 
@@ -29,7 +30,7 @@ type SessionRepository interface {
 
 type Service interface {
 	RegisterUser(ctx context.Context, username string, email string, passwordHash string) error
-	LoginUser(ctx context.Context, email string, passwordHash string) (string, error)
+	LoginUser(ctx context.Context, email string, username string, passwordHash string) (string, error)
 	LogoutUser(ctx context.Context, sessionId string) error
 	Authenticate(ctx context.Context, sessionId string) (*users.User, error)
 	CreateSession(ctx context.Context, userId int64, sessionId string) error
@@ -88,17 +89,20 @@ func (s *svc) RegisterUser(ctx context.Context, username string, email string, p
 	return nil
 }
 
-func (s *svc) LoginUser(ctx context.Context, email string, password string) (string, error) {
+func (s *svc) LoginUser(ctx context.Context, email string, username string, password string) (string, error) {
 
-	user, err := s.usersRepo.FindUserByEmail(ctx, email)
+	user, err := s.usersRepo.FindUserByEmailAndUsername(ctx, email, username)
 	if err != nil {
-		// log.Println(err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", utils.ErrInvalidCredentials
+		}
+
 		return "", err
 	}
 
 	// check password
 	if !utils.CheckPasswordHash(password, user.PasswordHash) {
-		return "", utils.ErrInvalidPassword
+		return "", utils.ErrInvalidCredentials
 	}
 
 	// generate session id
